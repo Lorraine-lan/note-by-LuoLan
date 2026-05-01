@@ -1,0 +1,25 @@
+server:
+  port: 8081 # 避免端口冲突
+
+spring:
+  datasource:
+    # MySQL 8.x驱动类（5.x用com.mysql.jdbc.Driver）
+    driver-class-name: com.mysql.jdbc.Driver
+    # 连接地址：替换为本地数据库名（如student_db）、账号密码
+    url: jdbc:mysql://localhost:3306/smbms_db?serverTimezone=UTC
+    username: root # 本地MySQL账号
+    password: 123456 # 本地MySQL密码
+    type: com.alibaba.druid.pool.DruidDataSource # 可选Druid数据源
+    druid:
+      initial-size:20
+      min_idle:10
+      max_active:100
+
+# MyBatis-Plus配置（匹配你的包结构）
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml # 扫描mapper.xml
+  type-aliases-package: package com.hgsf.supermarket.entity;
+  # 实体类包路径
+  configuration:
+    map-underscore-to-camel-case: false # 下划线转驼峰
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 打印SQL

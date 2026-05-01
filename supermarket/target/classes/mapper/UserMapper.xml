@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsf.supermarket.dao.UserMapper">
+
+    <resultMap id="getByUserCodeRM" type="com.hgsf.supermarket.entity.User">
+        <id column="uid" property="id"/>
+        <result column="userCode" property="userCode"/>
+        <result column="userName" property="userName"/>
+        <result column="userPassword" property="userPassword"/>
+        <result column="salt" property="salt"/>
+        <result column="status" property="status"/>
+        <result column="gender" property="gender"/>
+        <result column="birthday" property="birthday"/>
+        <result column="phone" property="phone"/>
+        <result column="address" property="address"/>
+        <result column="userRole" property="userRole"/>
+        <association property="role" javaType="com.hgsf.supermarket.entity.Role">
+            <id column="rid" property="id"/>
+            <result column="roleName" property="roleName"/>
+        </association>
+    </resultMap>
+    <resultMap id="nonAdminUserRM" type="com.hgsf.supermarket.entity.User">
+        <id column="uid" property="id"/>
+        <result column="userCode" property="userCode"/>
+        <result column="userName" property="userName"/>
+        <result column="userPassword" property="userPassword"/>
+        <result column="salt" property="salt"/>
+        <result column="status" property="status"/>
+        <result column="gender" property="gender"/>
+        <result column="birthday" property="birthday"/>
+        <result column="phone" property="phone"/>
+        <result column="address" property="address"/>
+        <result column="userRole" property="userRole"/>
+        <result column="creationDate" property="creationDate"/>
+        <association property="role" javaType="com.hgsf.supermarket.entity.Role">
+            <id column="rid" property="id"/>
+            <result column="roleName" property="roleName"/>
+        </association>
+    </resultMap>
+
+    <select id="getByUserCode" parameterType="java.lang.String" resultMap="getByUserCodeRM">
+            SELECT su.id uid,su.userCode,su.userName,su.userPassword,su.salt,su.status,
+             su.gender,su.birthday,su.phone,su.address,su.userRole,
+             sr.id rid,sr.roleName
+             FROM smbms_user su INNER JOIN smbms_role sr
+            ON su.userRole=sr.id
+            WHERE userCode=#{userCode}
+    </select>
+    <!-- 查询非admin用户列表（排除userCode为'admin'的用户） -->
+    <select id="getNonAdminUsers" parameterType="map" resultMap="nonAdminUserRM">
+        SELECT su.id uid,su.userCode,su.userName,su.userPassword,su.salt,su.status,
+        su.gender,su.birthday,su.phone,su.address,su.userRole,su.creationDate,
+        sr.id rid,sr.roleName
+        FROM smbms_user su
+        INNER JOIN smbms_role sr ON su.userRole = sr.id
+        WHERE su.userCode != 'admin'
+        <if test="userCode != null and userCode != ''">
+            AND su.userCode LIKE CONCAT('%', #{userCode}, '%')
+        </if>
+        <if test="userName != null and userName != ''">
+            AND su.userName LIKE CONCAT('%', #{userName}, '%')
+        </if>
+        ORDER BY su.creationDate DESC
+    </select>
+
+    <!-- 统计非admin用户数量 -->
+    <select id="countNonAdminUsers" parameterType="map" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM smbms_user su
+        WHERE su.userCode != 'admin'
+        <if test="userCode != null and userCode != ''">
+            AND su.userCode LIKE CONCAT('%', #{userCode}, '%')
+        </if>
+        <if test="userName != null and userName != ''">
+            AND su.userName LIKE CONCAT('%', #{userName}, '%')
+        </if>
+    </select>
+
+    <!-- 检查用户编码是否存在 -->
+    <select id="checkUserCodeExists" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM smbms_user WHERE userCode = #{userCode}
+    </select>
+
+    <!-- 根据ID查询用户（包含角色信息） -->
+    <select id="selectUserWithRoleById" parameterType="java.lang.Long" resultMap="getByUserCodeRM">
+        SELECT su.id uid,su.userCode,su.userName,su.userPassword,su.salt,su.status,
+             su.gender,su.birthday,su.phone,su.address,su.userRole,
+             sr.id rid,sr.roleName
+        FROM smbms_user su
+        INNER JOIN smbms_role sr ON su.userRole = sr.id
+        WHERE su.id = #{id}
+    </select>
+
+    <!-- 更新用户状态（启用/冻结） -->
+    <update id="updateUserStatus" parameterType="map">
+        UPDATE smbms_user
+        SET status = #{status}, modifyDate = NOW()
+        WHERE id = #{id} AND userCode != 'admin'
+    </update>
+</mapper>
+
